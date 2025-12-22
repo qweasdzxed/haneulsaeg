@@ -84,7 +84,8 @@
 
         <!-- 푸터 -->
         <div class="mt-8 text-center text-gray-500 text-sm">
-            <p>자동 업데이트: 1분마다 · Repository: qweasdzxed/haneulsaeg</p>
+            <p>자동 업데이트: 5초마다 · Repository: qweasdzxed/haneulsaeg</p>
+            <p class="mt-1 text-xs">⚡ 파일 저장 후 약 5-10초 내에 변경사항 감지</p>
         </div>
     </div>
 
@@ -238,8 +239,8 @@
         // 초기 실행
         updateGitHubStats();
         
-        // 1분마다 자동 업데이트
-        setInterval(updateGitHubStats, 60000);
+        // 5초마다 자동 업데이트 (더 빠른 감지)
+        setInterval(updateGitHubStats, 5000);
     </script>
 </body>
 </html>
