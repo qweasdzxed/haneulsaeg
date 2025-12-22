@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>실시간 모니터링 대시보드</title>
+    <title>GitHub 변경사항 모니터링</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @keyframes pulse {
@@ -11,6 +11,11 @@
             50% { opacity: 0.5; }
         }
         .pulse { animation: pulse 2s infinite; }
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .slide-in { animation: slideIn 0.3s ease-out; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen p-6">
@@ -19,207 +24,222 @@
         <div class="mb-8">
             <h1 class="text-4xl font-bold text-gray-800 mb-2 flex items-center gap-3">
                 <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
-                실시간 모니터링 대시보드
+                GitHub 변경사항 모니터링
             </h1>
-            <p class="text-gray-600">GitHub 저장소 및 시스템 리소스 통합 모니터링</p>
+            <p class="text-gray-600">저장소의 변경사항을 실시간으로 추적합니다</p>
         </div>
 
-        <!-- GitHub 통계 -->
-        <div class="mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                GitHub 저장소 상태
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-indigo-500">
-                    <h3 class="text-sm font-medium text-gray-600 mb-2">최근 커밋</h3>
-                    <div class="flex items-baseline gap-1">
-                        <span id="totalCommits" class="text-3xl font-bold text-gray-800">0</span>
-                        <span class="text-sm text-gray-500">개</span>
-                    </div>
-                </div>
-                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
-                    <h3 class="text-sm font-medium text-gray-600 mb-2">변경된 파일</h3>
-                    <div class="flex items-baseline gap-1">
-                        <span id="filesChanged" class="text-3xl font-bold text-gray-800">0</span>
-                        <span class="text-sm text-gray-500">개</span>
-                    </div>
-                </div>
-                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-cyan-500">
-                    <h3 class="text-sm font-medium text-gray-600 mb-2">마지막 업데이트</h3>
-                    <div class="flex items-baseline gap-1">
-                        <span id="lastUpdate" class="text-3xl font-bold text-gray-800">--:--</span>
-                    </div>
+        <!-- 통계 카드 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-indigo-500">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">총 커밋</h3>
+                <div class="flex items-baseline gap-1">
+                    <span id="totalCommits" class="text-3xl font-bold text-gray-800">0</span>
+                    <span class="text-sm text-gray-500">개</span>
                 </div>
             </div>
-
-            <!-- 최근 커밋 목록 -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">최근 커밋 내역</h3>
-                <div id="commitList" class="space-y-3">
-                    <p class="text-gray-500 text-center py-4 pulse">커밋 데이터를 불러오는 중...</p>
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">추가된 줄</h3>
+                <div class="flex items-baseline gap-1">
+                    <span id="totalAdditions" class="text-3xl font-bold text-green-600">0</span>
+                    <span class="text-sm text-gray-500">줄</span>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">삭제된 줄</h3>
+                <div class="flex items-baseline gap-1">
+                    <span id="totalDeletions" class="text-3xl font-bold text-red-600">0</span>
+                    <span class="text-sm text-gray-500">줄</span>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">변경된 파일</h3>
+                <div class="flex items-baseline gap-1">
+                    <span id="totalFiles" class="text-3xl font-bold text-purple-600">0</span>
+                    <span class="text-sm text-gray-500">개</span>
                 </div>
             </div>
         </div>
 
-        <!-- 시스템 리소스 -->
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-                시스템 리소스
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-amber-500">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-sm font-medium text-gray-600">CPU 사용률</h3>
-                        <span id="cpuStatus" class="text-xs px-2 py-1 rounded bg-green-100 text-green-700">정상</span>
-                    </div>
-                    <div class="flex items-baseline gap-1">
-                        <span id="cpuValue" class="text-3xl font-bold text-gray-800">0</span>
-                        <span class="text-sm text-gray-500">%</span>
-                    </div>
-                </div>
-                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-sm font-medium text-gray-600">메모리 사용률</h3>
-                        <span id="memStatus" class="text-xs px-2 py-1 rounded bg-green-100 text-green-700">정상</span>
-                    </div>
-                    <div class="flex items-baseline gap-1">
-                        <span id="memValue" class="text-3xl font-bold text-gray-800">0</span>
-                        <span class="text-sm text-gray-500">%</span>
-                    </div>
-                </div>
-                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-sm font-medium text-gray-600">디스크 사용률</h3>
-                        <span id="diskStatus" class="text-xs px-2 py-1 rounded bg-green-100 text-green-700">정상</span>
-                    </div>
-                    <div class="flex items-baseline gap-1">
-                        <span id="diskValue" class="text-3xl font-bold text-gray-800">0</span>
-                        <span class="text-sm text-gray-500">%</span>
-                    </div>
-                </div>
+        <!-- 최근 커밋 상세 -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">최근 커밋 내역</h2>
+                <span id="lastUpdate" class="text-sm text-gray-500">마지막 업데이트: --:--</span>
             </div>
+            <div id="commitList" class="space-y-4">
+                <p class="text-gray-500 text-center py-8 pulse">데이터를 불러오는 중...</p>
+            </div>
+        </div>
 
-            <!-- 리소스 그래프 -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">리소스 시각화</h3>
-                <div class="space-y-4">
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm font-medium text-gray-700">CPU</span>
-                            <span id="cpuBar" class="text-sm font-bold text-gray-800">0%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                            <div id="cpuProgress" class="h-full bg-amber-500 transition-all duration-500 ease-out rounded-full" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm font-medium text-gray-700">메모리</span>
-                            <span id="memBar" class="text-sm font-bold text-gray-800">0%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                            <div id="memProgress" class="h-full bg-green-500 transition-all duration-500 ease-out rounded-full" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm font-medium text-gray-700">디스크</span>
-                            <span id="diskBar" class="text-sm font-bold text-gray-800">0%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                            <div id="diskProgress" class="h-full bg-red-500 transition-all duration-500 ease-out rounded-full" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
+        <!-- 파일 변경 통계 -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">가장 많이 변경된 파일 TOP 10</h2>
+            <div id="fileStats" class="space-y-3">
+                <p class="text-gray-500 text-center py-8">데이터를 분석하는 중...</p>
             </div>
         </div>
 
         <!-- 푸터 -->
         <div class="mt-8 text-center text-gray-500 text-sm">
-            <p>자동 업데이트: GitHub (1분) · 시스템 (3초)</p>
+            <p>자동 업데이트: 1분마다 · Repository: qweasdzxed/haneulsaeg</p>
         </div>
     </div>
 
     <script>
-        // GitHub 통계 업데이트
+        let fileChangeCount = {};
+
+        // GitHub 커밋 상세 정보 가져오기
         async function updateGitHubStats() {
             try {
-                const response = await fetch('https://api.github.com/repos/qweasdzxed/haneulsaeg/commits?per_page=5');
+                const response = await fetch('https://api.github.com/repos/qweasdzxed/haneulsaeg/commits?per_page=10');
                 const commits = await response.json();
                 
-                if (Array.isArray(commits)) {
-                    document.getElementById('totalCommits').textContent = commits.length;
-                    document.getElementById('filesChanged').textContent = Math.floor(Math.random() * 20) + 5;
-                    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('ko-KR');
-                    
-                    const commitList = document.getElementById('commitList');
-                    commitList.innerHTML = commits.map(c => `
-                        <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                            <div class="w-2 h-2 bg-indigo-500 rounded-full mt-2"></div>
-                            <div class="flex-1">
-                                <p class="font-medium text-gray-800">${c.commit.message}</p>
-                                <p class="text-sm text-gray-500 mt-1">
-                                    ${c.commit.author.name} · ${new Date(c.commit.author.date).toLocaleString('ko-KR')}
-                                </p>
+                if (!Array.isArray(commits)) {
+                    throw new Error('Invalid response');
+                }
+
+                document.getElementById('totalCommits').textContent = commits.length;
+                document.getElementById('lastUpdate').textContent = `마지막 업데이트: ${new Date().toLocaleTimeString('ko-KR')}`;
+                
+                let totalAdditions = 0;
+                let totalDeletions = 0;
+                let totalFiles = 0;
+                
+                // 각 커밋의 상세 정보 가져오기
+                const detailedCommits = await Promise.all(
+                    commits.map(async (commit) => {
+                        try {
+                            const detailResponse = await fetch(commit.url);
+                            const detail = await detailResponse.json();
+                            
+                            totalAdditions += detail.stats?.additions || 0;
+                            totalDeletions += detail.stats?.deletions || 0;
+                            totalFiles += detail.files?.length || 0;
+                            
+                            // 파일별 변경 횟수 추적
+                            if (detail.files) {
+                                detail.files.forEach(file => {
+                                    fileChangeCount[file.filename] = (fileChangeCount[file.filename] || 0) + 1;
+                                });
+                            }
+                            
+                            return {
+                                message: commit.commit.message,
+                                author: commit.commit.author.name,
+                                date: new Date(commit.commit.author.date).toLocaleString('ko-KR'),
+                                sha: commit.sha.substring(0, 7),
+                                stats: detail.stats,
+                                files: detail.files || []
+                            };
+                        } catch (error) {
+                            console.error('커밋 상세 정보 오류:', error);
+                            return null;
+                        }
+                    })
+                );
+
+                document.getElementById('totalAdditions').textContent = totalAdditions;
+                document.getElementById('totalDeletions').textContent = totalDeletions;
+                document.getElementById('totalFiles').textContent = totalFiles;
+                
+                // 커밋 목록 렌더링
+                const commitList = document.getElementById('commitList');
+                commitList.innerHTML = detailedCommits
+                    .filter(c => c !== null)
+                    .map(commit => `
+                        <div class="border-l-4 border-indigo-500 pl-4 py-3 hover:bg-gray-50 transition slide-in">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex-1">
+                                    <p class="font-semibold text-gray-800 text-lg">${commit.message}</p>
+                                    <p class="text-sm text-gray-500 mt-1">
+                                        <span class="font-medium">${commit.author}</span> · 
+                                        ${commit.date} · 
+                                        <code class="bg-gray-100 px-2 py-0.5 rounded text-xs">${commit.sha}</code>
+                                    </p>
+                                </div>
+                                <div class="text-right ml-4">
+                                    <div class="text-xs text-gray-600">
+                                        <span class="text-green-600 font-medium">+${commit.stats?.additions || 0}</span> / 
+                                        <span class="text-red-600 font-medium">-${commit.stats?.deletions || 0}</span>
+                                    </div>
+                                </div>
                             </div>
+                            
+                            ${commit.files.length > 0 ? `
+                                <div class="mt-3 space-y-1">
+                                    <p class="text-xs text-gray-600 font-medium mb-1">변경된 파일 (${commit.files.length}개):</p>
+                                    ${commit.files.slice(0, 5).map(file => `
+                                        <div class="flex items-center gap-2 text-sm bg-gray-50 px-3 py-1.5 rounded">
+                                            <span class="flex-1 font-mono text-xs text-gray-700">${file.filename}</span>
+                                            <span class="text-xs">
+                                                <span class="text-green-600">+${file.additions}</span> / 
+                                                <span class="text-red-600">-${file.deletions}</span>
+                                            </span>
+                                            <span class="text-xs px-2 py-0.5 rounded ${
+                                                file.status === 'added' ? 'bg-green-100 text-green-700' :
+                                                file.status === 'removed' ? 'bg-red-100 text-red-700' :
+                                                'bg-blue-100 text-blue-700'
+                                            }">${
+                                                file.status === 'added' ? '추가' :
+                                                file.status === 'removed' ? '삭제' :
+                                                file.status === 'renamed' ? '이름변경' : '수정'
+                                            }</span>
+                                        </div>
+                                    `).join('')}
+                                    ${commit.files.length > 5 ? `<p class="text-xs text-gray-500 pl-3">... 외 ${commit.files.length - 5}개</p>` : ''}
+                                </div>
+                            ` : ''}
                         </div>
                     `).join('');
-                }
+                
+                // 파일 변경 통계 업데이트
+                updateFileStats();
+                
             } catch (error) {
                 console.error('GitHub API 오류:', error);
-                document.getElementById('commitList').innerHTML = '<p class="text-red-500 text-center py-4">데이터를 불러올 수 없습니다.</p>';
+                document.getElementById('commitList').innerHTML = '<p class="text-red-500 text-center py-4">데이터를 불러올 수 없습니다. API 제한에 도달했을 수 있습니다.</p>';
             }
         }
 
-        // 시스템 리소스 업데이트
-        function updateSystemStats() {
-            const cpu = Math.floor(Math.random() * 60) + 20;
-            const mem = Math.floor(Math.random() * 40) + 40;
-            const disk = Math.floor(Math.random() * 20) + 60;
+        // 파일 변경 통계 업데이트
+        function updateFileStats() {
+            const sorted = Object.entries(fileChangeCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
             
-            // CPU
-            document.getElementById('cpuValue').textContent = cpu;
-            document.getElementById('cpuBar').textContent = cpu + '%';
-            document.getElementById('cpuProgress').style.width = cpu + '%';
-            document.getElementById('cpuStatus').textContent = cpu < 50 ? '정상' : cpu < 80 ? '주의' : '높음';
-            document.getElementById('cpuStatus').className = `text-xs px-2 py-1 rounded ${
-                cpu < 50 ? 'bg-green-100 text-green-700' : cpu < 80 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-            }`;
+            const maxCount = sorted[0]?.[1] || 1;
             
-            // 메모리
-            document.getElementById('memValue').textContent = mem;
-            document.getElementById('memBar').textContent = mem + '%';
-            document.getElementById('memProgress').style.width = mem + '%';
-            document.getElementById('memStatus').textContent = mem < 50 ? '정상' : mem < 80 ? '주의' : '높음';
-            document.getElementById('memStatus').className = `text-xs px-2 py-1 rounded ${
-                mem < 50 ? 'bg-green-100 text-green-700' : mem < 80 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-            }`;
+            const fileStats = document.getElementById('fileStats');
+            if (sorted.length === 0) {
+                fileStats.innerHTML = '<p class="text-gray-500 text-center py-4">파일 변경 통계가 없습니다.</p>';
+                return;
+            }
             
-            // 디스크
-            document.getElementById('diskValue').textContent = disk;
-            document.getElementById('diskBar').textContent = disk + '%';
-            document.getElementById('diskProgress').style.width = disk + '%';
-            document.getElementById('diskStatus').textContent = disk < 50 ? '정상' : disk < 80 ? '주의' : '높음';
-            document.getElementById('diskStatus').className = `text-xs px-2 py-1 rounded ${
-                disk < 50 ? 'bg-green-100 text-green-700' : disk < 80 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-            }`;
+            fileStats.innerHTML = sorted.map(([filename, count], index) => {
+                const percentage = (count / maxCount) * 100;
+                return `
+                    <div class="slide-in">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-sm font-bold text-gray-500 w-6">${index + 1}</span>
+                            <span class="flex-1 font-mono text-sm text-gray-700">${filename}</span>
+                            <span class="text-sm font-semibold text-indigo-600">${count}회</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 ml-9">
+                            <div class="h-full bg-indigo-500 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // 초기 실행
         updateGitHubStats();
-        updateSystemStats();
         
-        // 주기적 업데이트
-        setInterval(updateGitHubStats, 60000); // 1분마다
-        setInterval(updateSystemStats, 3000);  // 3초마다
+        // 1분마다 자동 업데이트
+        setInterval(updateGitHubStats, 60000);
     </script>
 </body>
 </html>
